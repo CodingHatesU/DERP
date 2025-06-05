@@ -28,6 +28,12 @@ public class AttendanceController {
         return new ResponseEntity<>(responseDto, HttpStatus.CREATED);
     }
 
+    @GetMapping
+    public ResponseEntity<List<AttendanceRecordResponseDto>> getAllAttendanceRecords() {
+        List<AttendanceRecordResponseDto> responseDtos = attendanceService.getAllAttendanceRecords();
+        return ResponseEntity.ok(responseDtos);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<AttendanceRecordResponseDto> getAttendanceRecordById(@PathVariable String id) {
         AttendanceRecordResponseDto responseDto = attendanceService.getAttendanceRecordById(id);

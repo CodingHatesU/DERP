@@ -118,6 +118,13 @@ public class AttendanceService {
         attendanceRecordRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<AttendanceRecordResponseDto> getAllAttendanceRecords() {
+        return attendanceRecordRepository.findAll().stream()
+                .map(this::mapToAttendanceRecordResponseDto)
+                .collect(Collectors.toList());
+    }
+
     private AttendanceRecordResponseDto mapToAttendanceRecordResponseDto(AttendanceRecord record) {
         AttendanceRecordResponseDto dto = new AttendanceRecordResponseDto();
         dto.setId(record.getId());

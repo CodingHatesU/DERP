@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { Menu, Home, BookOpen, UserPlus, LogIn, Users, GraduationCap, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, Home, BookOpen, UserPlus, LogIn, Users, GraduationCap, LogOut, LayoutDashboard, ListChecks } from 'lucide-react';
 
 export default function Navbar() {
   const { isAuthenticated, user, logout, isLoading } = useAuth();
@@ -48,7 +48,11 @@ export default function Navbar() {
               <GraduationCap className="mr-2 h-4 w-4" /> Course Management
             </Button>
           </Link>
-           {/* Example: Dashboard link for admin */}
+          <Link href="/admin/attendance">
+            <Button variant="ghost" className="w-full justify-start">
+              <ListChecks className="mr-2 h-4 w-4" /> Attendance
+            </Button>
+          </Link>
            <Link href="/admin/dashboard">
              <Button variant="ghost" className="w-full justify-start">
                 <LayoutDashboard className="mr-2 h-4 w-4" /> Admin Dashboard
@@ -103,7 +107,11 @@ export default function Navbar() {
                       <GraduationCap className="mr-1 h-4 w-4 inline" /> Courses
                     </Button>
                   </Link>
-                  {/* Example: Admin Dashboard Link Desktop */}
+                  <Link href="/admin/attendance">
+                    <Button variant="ghost" className="hover:bg-gray-700 hover:text-white">
+                      <ListChecks className="mr-1 h-4 w-4 inline" /> Attendance
+                    </Button>
+                  </Link>
                   <Link href="/admin/dashboard">
                      <Button variant="ghost" className="hover:bg-gray-700 hover:text-white">
                         <LayoutDashboard className="mr-1 h-4 w-4 inline" /> Dashboard
