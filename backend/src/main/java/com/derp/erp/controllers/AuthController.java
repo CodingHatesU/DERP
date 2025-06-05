@@ -4,7 +4,6 @@ import com.derp.erp.dtos.RegisterRequest;
 import com.derp.erp.models.Role;
 import com.derp.erp.models.User;
 import com.derp.erp.repositories.UserRepository;
-import com.derp.erp.services.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +19,10 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
     }
 
     @PostMapping("/register")
@@ -56,8 +53,6 @@ public class AuthController {
         }
         user.setRoles(roles);
         User savedUser = userRepository.save(user);
-
-        emailService.sendWelcomeEmail(savedUser);
 
         return ResponseEntity.ok("User registered successfully!");
     }
