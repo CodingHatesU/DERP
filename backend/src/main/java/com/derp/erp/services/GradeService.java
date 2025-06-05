@@ -57,6 +57,13 @@ public class GradeService {
     }
 
     @Transactional(readOnly = true)
+    public List<GradeResponseDto> getAllGrades() {
+        return gradeRepository.findAll().stream()
+                .map(this::mapToGradeResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<GradeResponseDto> getGradesByStudentId(String studentId) {
         if (!studentRepository.existsById(studentId)) {
             throw new ResourceNotFoundException("Student not found with id: " + studentId);

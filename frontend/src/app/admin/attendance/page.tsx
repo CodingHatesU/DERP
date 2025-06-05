@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { PlusCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { PlusCircle, MoreHorizontal, Edit, Trash2, CalendarIcon } from 'lucide-react';
+import { format, isValid, parseISO } from 'date-fns';
 
 import {
   AttendanceRecord,
@@ -20,12 +20,16 @@ import { getAllCourses } from '@/services/courseService';   // To fetch courses 
 import type { Student } from '@/types/student.types';
 import type { Course } from '@/types/course.types';
 import { ApiError } from '@/lib/apiClient';
+import { cn } from "@/lib/utils"; // For styling date picker button
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // For DatePicker
+import { Calendar } from "@/components/ui/calendar"; // For DatePicker
+import { Progress } from "@/components/ui/progress"; // Added import
 import { AttendanceFormDialog } from '@/components/admin/attendance/AttendanceFormDialog';
 import DeleteConfirmationDialog from '@/components/common/DeleteConfirmationDialog'; // Default import
 
@@ -46,6 +50,10 @@ export default function AttendanceManagementPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<AttendanceRecord | null>(null);
 
+  // State for date range filter
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
   const isAdmin = user?.roles?.includes('ROLE_ADMIN');
 
   const aggregatedAttendanceData = useMemo((): AggregatedCourseAttendance[] => {
@@ -53,9 +61,27 @@ export default function AttendanceManagementPage() {
       return [];
     }
 
+    const filteredRecords = attendanceRecords.filter(record => {
+      if (!record.date || !isValid(parseISO(record.date))) return false; // Skip if record date is invalid
+      const recordDate = parseISO(record.date); // record.date is YYYY-MM-DD string
+      
+      if (startDate && recordDate < startDate) {
+        return false;
+      }
+      // Adjust end date to be inclusive of the selected day
+      if (endDate) {
+        const inclusiveEndDate = new Date(endDate);
+        inclusiveEndDate.setHours(23, 59, 59, 999); // Set to end of day
+        if (recordDate > inclusiveEndDate) {
+          return false;
+        }
+      }
+      return true;
+    });
+
     return courses.map(course => {
       const courseAttendance: AggregatedStudentAttendance[] = students.map(student => {
-        const relevantRecords = attendanceRecords.filter(
+        const relevantRecords = filteredRecords.filter(
           record => record.courseId === course.id && record.studentId === student.id
         );
 
@@ -75,7 +101,7 @@ export default function AttendanceManagementPage() {
           studentLastName: student.lastName,
           presentCount,
           totalRecords,
-          attendancePercentage: parseFloat(attendancePercentage.toFixed(1)), // Round to 1 decimal place
+          attendancePercentage: parseFloat(attendancePercentage.toFixed(1)),
         };
       });
 
@@ -86,7 +112,7 @@ export default function AttendanceManagementPage() {
         studentsAttendance: courseAttendance,
       };
     });
-  }, [attendanceRecords, students, courses, isLoadingData]);
+  }, [attendanceRecords, students, courses, isLoadingData, startDate, endDate]);
 
   const loadInitialData = useCallback(async () => {
     if (!fetchWithAuth || !isAdmin) return;
@@ -263,40 +289,119 @@ export default function AttendanceManagementPage() {
                 <CardHeader>
                   <CardTitle>Aggregate Attendance View</CardTitle>
                   <CardDescription>
-                    View attendance percentages by course and student.
+                    View attendance percentages by course and student. Filter by date range.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-4 mb-4 p-4 border rounded-md">
+                    <div className="flex-1">
+                      <label htmlFor="startDateAgg" className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="startDateAgg"
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !startDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={startDate}
+                            onSelect={setStartDate}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex-1">
+                      <label htmlFor="endDateAgg" className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="endDateAgg"
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !endDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={endDate}
+                            onSelect={setEndDate}
+                            disabled={(date) =>
+                              startDate ? date < startDate : false
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                     <Button onClick={() => { setStartDate(undefined); setEndDate(undefined); }} variant="outline" className="self-end sm:self-center mt-2 sm:mt-0">
+                        Clear Dates
+                      </Button>
+                  </div>
+
                   {isLoadingData ? (
                     <p className="text-center py-4">Loading aggregate data...</p>
                   ) : aggregatedAttendanceData.length === 0 ? (
-                    <p className="text-center py-4">No data available for aggregate view.</p>
+                    <p className="text-center py-4">No data available for the selected criteria or no records found.</p>
                   ) : (
                     <div>
                       {aggregatedAttendanceData.map(courseData => (
                         <div key={courseData.courseId} className="mb-6 p-4 border rounded-lg">
                           <h3 className="text-xl font-semibold mb-2">{courseData.courseName} ({courseData.courseCode})</h3>
                           {courseData.studentsAttendance.length === 0 ? (
-                            <p>No students found for this course in the current records.</p>
+                            <p>No students found for this course within the selected date range or no records exist.</p>
                           ) : (
                             <Table>
                               <TableHeader>
                                 <TableRow>
                                   <TableHead>Student</TableHead>
                                   <TableHead className="text-center">Present/Excused</TableHead>
-                                  <TableHead className="text-center">Total Records</TableHead>
+                                  <TableHead className="text-center">Total Records (in range)</TableHead>
                                   <TableHead className="text-right">Attendance %</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {courseData.studentsAttendance.map(studentAtt => (
+                                {courseData.studentsAttendance.filter(sa => sa.totalRecords > 0).map(studentAtt => ( 
                                   <TableRow key={studentAtt.studentId}>
                                     <TableCell>{studentAtt.studentFirstName} {studentAtt.studentLastName}</TableCell>
                                     <TableCell className="text-center">{studentAtt.presentCount}</TableCell>
                                     <TableCell className="text-center">{studentAtt.totalRecords}</TableCell>
-                                    <TableCell className="text-right">{studentAtt.attendancePercentage}%</TableCell>
+                                    <TableCell className="w-48"> 
+                                      <div className="flex items-center">
+                                        <Progress 
+                                          value={studentAtt.attendancePercentage} 
+                                          className={cn(
+                                            "w-3/4 h-3",
+                                            {
+                                              "[&>div]:bg-green-500": studentAtt.attendancePercentage >= 75, // Target the inner div for green
+                                              "[&>div]:bg-yellow-500": studentAtt.attendancePercentage < 75 && studentAtt.attendancePercentage >= 50, // Target for yellow
+                                              "[&>div]:bg-red-500": studentAtt.attendancePercentage < 50, // Target for red
+                                            }
+                                          )}
+                                        />
+                                        <span className="ml-2 text-sm w-1/4 text-right">{studentAtt.attendancePercentage}%</span>
+                                      </div>
+                                    </TableCell>
                                   </TableRow>
                                 ))}
+                                {courseData.studentsAttendance.filter(sa => sa.totalRecords > 0).length === 0 && (
+                                   <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No attendance records for any student in this course for the selected date range.</TableCell></TableRow>
+                                )}
                               </TableBody>
                             </Table>
                           )}

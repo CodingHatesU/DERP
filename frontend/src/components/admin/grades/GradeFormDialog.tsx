@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,7 @@ import {
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
@@ -21,38 +22,39 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from "@/lib/utils";
-import { AttendanceFormData, attendanceFormSchema, AttendanceStatus, attendanceStatusEnum, AttendanceRecord } from '@/types/attendance.types';
-import type { Student } from '@/types/student.types';
-import type { Course } from '@/types/course.types';
+import { GradeFormData, gradeFormSchema, Grade } from '@/types/grade.types';
+import type { Student } from '@/types/student.types'; // Assuming you have a simplified Student type for dropdowns
+import type { Course } from '@/types/course.types';   // Assuming you have a simplified Course type for dropdowns
 import { ApiError } from '@/lib/apiClient';
 
-interface AttendanceFormDialogProps {
+interface GradeFormDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  attendanceRecord?: AttendanceRecord | null; 
-  students: Pick<Student, 'id' | 'firstName' | 'lastName'>[]; // Simplified student type for dropdown
-  courses: Pick<Course, 'id' | 'courseCode' | 'courseName'>[]; // Simplified course type for dropdown
-  onSave: (data: AttendanceFormData, recordId?: string) => Promise<void>;
+  grade?: Grade | null; 
+  students: Pick<Student, 'id' | 'firstName' | 'lastName'>[];
+  courses: Pick<Course, 'id' | 'courseCode' | 'courseName'>[];
+  onSave: (data: GradeFormData, recordId?: string) => Promise<void>;
   isLoading: boolean;
 }
 
-export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
+export const GradeFormDialog: React.FC<GradeFormDialogProps> = ({
   isOpen,
   setIsOpen,
-  attendanceRecord,
+  grade,
   students,
   courses,
   onSave,
   isLoading,
 }) => {
-  const form = useForm<AttendanceFormData>({
-    resolver: zodResolver(attendanceFormSchema),
+  const form = useForm<GradeFormData>({
+    resolver: zodResolver(gradeFormSchema),
     defaultValues: {
       studentId: '',
       courseId: '',
-      date: new Date(),
-      status: undefined,
-      remarks: '',
+      assessmentType: '',
+      gradeValue: '',
+      assessmentDate: null, // Default to null, can be set to new Date() if preferred for new entries
+      comments: '',
     },
   });
 
@@ -60,40 +62,36 @@ export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (attendanceRecord && attendanceRecord.date) {
-        const parts = attendanceRecord.date.split('-');
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
-        const recordDate = new Date(year, month, day);
-        
+      if (grade) {
         form.reset({
-          studentId: attendanceRecord.studentId || '',
-          courseId: attendanceRecord.courseId || '',
-          date: recordDate, 
-          status: attendanceRecord.status || undefined,
-          remarks: attendanceRecord.remarks || '',
+          studentId: grade.studentId || '',
+          courseId: grade.courseId || '',
+          assessmentType: grade.assessmentType || '',
+          gradeValue: grade.gradeValue || '',
+          assessmentDate: grade.assessmentDate ? parseISO(grade.assessmentDate) : null,
+          comments: grade.comments || '',
         });
       } else {
         form.reset({
           studentId: '',
           courseId: '',
-          date: new Date(), 
-          status: undefined,
-          remarks: '',
+          assessmentType: '',
+          gradeValue: '',
+          assessmentDate: null, // Or new Date() if you want it to default to today for new grades
+          comments: '',
         });
       }
     }
-  }, [isOpen, attendanceRecord, form]);
+  }, [isOpen, grade, form]);
 
-  const onSubmit = async (data: AttendanceFormData) => {
+  const onSubmit = async (data: GradeFormData) => {
     try {
-      await onSave(data, attendanceRecord?.id);
-      toast.success(attendanceRecord ? 'Attendance record updated!' : 'Attendance record created!');
+      await onSave(data, grade?.id);
+      // Toast handled by parent page to allow for different success messages
       setIsOpen(false);
     } catch (error) {
-      console.error('Failed to save attendance record:', error);
-      const defaultMessage = attendanceRecord ? 'Failed to update record' : 'Failed to create record';
+      console.error('Failed to save grade:', error);
+      const defaultMessage = grade ? 'Failed to update grade' : 'Failed to create grade';
       if (error instanceof ApiError) {
         toast.error(error.message || defaultMessage, {
           description: error.data?.errors ? JSON.stringify(error.data.errors) : (error.data?.message || 'Please try again.')
@@ -107,12 +105,12 @@ export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={setIsOpen} modal={true}>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{attendanceRecord ? 'Edit Attendance Record' : 'Add Attendance Record'}</DialogTitle>
+          <DialogTitle>{grade ? 'Edit Grade' : 'Add Grade'}</DialogTitle>
           <DialogDescription>
-            {attendanceRecord ? 'Update the details of the attendance record.' : 'Enter the details for the new attendance record.'}
+            {grade ? 'Update the details of this grade.' : 'Enter the details for the new grade.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -169,10 +167,38 @@ export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
 
             <FormField
               control={form.control}
-              name="date"
+              name="assessmentType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assessment Type</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Midterm, Final, Assignment 1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="gradeValue"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Grade Value</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., A, 85%, Pass" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="assessmentDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>Assessment Date (Optional)</FormLabel>
                   <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -185,37 +211,24 @@ export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            // console.log('Calendar trigger clicked. Before open state:', isCalendarOpen);
                             setIsCalendarOpen((prev) => !prev);
                           }}
                         >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
+                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent 
-                      className="w-auto p-0 z-[9999]"
-                      align="start"
-                    >
-                      {/* <p className="text-lg font-bold">CALENDAR POPOVER TEST</p> */}
+                    <PopoverContent className="w-auto p-0 z-[9999]" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value as Date | undefined}
+                        selected={field.value === null ? undefined : field.value}
                         onSelect={(dateValue) => {
-                          if (dateValue) {
-                            field.onChange(dateValue);
-                          }
+                          field.onChange(dateValue || null);
                           setIsCalendarOpen(false);
                         }}
-                        disabled={(date: Date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
+                        disabled={(date: Date) => date > new Date()} // Allow future dates for assessment scheduling
+                        // initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -226,37 +239,12 @@ export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
 
             <FormField
               control={form.control}
-              name="status"
+              name="comments"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {attendanceStatusEnum.options.map(statusValue => (
-                        <SelectItem key={statusValue} value={statusValue}>
-                          {statusValue.charAt(0).toUpperCase() + statusValue.slice(1).toLowerCase()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="remarks"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Remarks (Optional)</FormLabel>
+                  <FormLabel>Comments (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Enter any remarks" {...field} value={field.value || ''} />
+                    <Textarea placeholder="Enter any comments" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -265,12 +253,12 @@ export const AttendanceFormDialog: React.FC<AttendanceFormDialogProps> = ({
 
             <DialogFooter>
               <DialogClose asChild>
-                <Button type="button" variant="outline" disabled={isLoading}>
+                <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
                   Cancel
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? (attendanceRecord ? 'Saving...' : 'Creating...') : (attendanceRecord ? 'Save Changes' : 'Create Record')}
+                {isLoading ? (grade ? 'Saving...' : 'Creating...') : (grade ? 'Save Changes' : 'Create Grade')}
               </Button>
             </DialogFooter>
           </form>
