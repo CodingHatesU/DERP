@@ -19,7 +19,7 @@ export class ApiError extends Error {
   }
 }
 
-interface ApiClientOptions extends Omit<RequestInit, 'body'> { // Omit BodyInit from RequestInit
+export interface ApiClientOptions extends Omit<RequestInit, 'body'> { // Omit BodyInit from RequestInit
   body?: BodyInit | Record<string, any> | null; // Allow objects for stringification
   // We might add other custom options here later
 }

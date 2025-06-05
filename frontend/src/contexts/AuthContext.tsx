@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { User, LoginFormData, RegisterRequestPayload, BackendRole } from '@/types/auth.types';
-import apiClient, { ApiError } from '@/lib/apiClient';
+import apiClient, { ApiError, type ApiErrorData, type ApiClientOptions } from '@/lib/apiClient';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -12,8 +12,8 @@ interface AuthContextType {
   login: (credentials: LoginFormData) => Promise<void>;
   register: (data: RegisterRequestPayload) => Promise<void>;
   logout: () => Promise<void>;
-  fetchWithAuth: <T>(endpoint: string, options?: RequestInit) => Promise<T>; // Helper to make authenticated API calls
-  activeUsername: string | null; // Store username for Basic Auth if needed
+  fetchWithAuth: <T>(endpoint: string, options?: ApiClientOptions) => Promise<T>;
+  activeUsername: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -148,12 +148,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   // Helper function to make authenticated API calls using Basic Auth if available
-  const fetchWithAuth = useCallback(async <T extends unknown>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+  const fetchWithAuth = useCallback(async <T extends unknown>(
+    endpoint: string, 
+    options: ApiClientOptions = {}
+  ): Promise<T> => {
     if (!activeUsername || !activePassword) {
-        // This case should ideally not happen if routes are protected and user is not authenticated.
-        // Or, it means we are trying to call an authenticated endpoint without being logged in.
         console.warn("fetchWithAuth called without active credentials. This might fail if endpoint is protected.");
-        // Fallback to public request or let it fail if endpoint requires auth
          return apiClient<T>(endpoint, options);
     }
     const authHeader = 'Basic ' + btoa(`${activeUsername}:${activePassword}`);
