@@ -6,7 +6,6 @@ import com.derp.erp.models.User;
 import com.derp.erp.repositories.UserRepository;
 import com.derp.erp.services.EmailService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
