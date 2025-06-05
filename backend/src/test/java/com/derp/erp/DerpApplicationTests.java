@@ -9,5 +9,4 @@ class DerpApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }
