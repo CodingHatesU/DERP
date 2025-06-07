@@ -1,22 +1,11 @@
 ```
 ██████╗ ███████╗██████╗ ██████╗ 
-<<<<<<< HEAD
 ██╔══██╗██╔════╝██╔══██╗██╔══██╗
 ██║  ██║█████╗  ██████╔╝██████╔╝
 ██║  ██║██╔══╝  ██╔══██╗██╔═══╝ 
 ██████╔╝███████╗██║  ██║██║     
 ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝     
-
-=======
-██╔══██╗██╔════╝██╔══██╗██╔══██╗ 
-██║  ██║█████╗  ██████╔╝██████╔╝ 
-██║  ██║██╔══╝  ██╔══██╗██╔═══╝  
-██████╔╝███████╗██║  ██║██║  
-╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  
 ```
->>>>>>> 00e774ce26428b41d6c3aa1f5d28ead41c2f3b50
-# DERP - A Modern College ERP System
-
 <p align="center">
   <img src="https://img.shields.io/badge/Java-17-blue?style=for-the-badge&logo=java&logoColor=white" alt="Java">
   <img src="https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=spring&logoColor=white" alt="Spring">
@@ -27,6 +16,7 @@
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
 </p>
+# DERP - A Modern College ERP System
 
 Welcome to DERP, a full-stack College Enterprise Resource Planning (ERP) system designed to streamline administrative and academic processes. This project provides a robust backend powered by Spring Boot and a sleek, responsive frontend built with Next.js.
 
