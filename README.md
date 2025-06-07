@@ -16,6 +16,7 @@
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS">
 </p>
+
 # DERP - A Modern College ERP System
 
 Welcome to DERP, a full-stack College Enterprise Resource Planning (ERP) system designed to streamline administrative and academic processes. This project provides a robust backend powered by Spring Boot and a sleek, responsive frontend built with Next.js.
