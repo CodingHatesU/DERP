@@ -4,30 +4,11 @@
 ██║  ██║██╔══╝  ██╔══██╗██╔═══╝ 
 ██████╔╝███████╗██║  ██║██║     
 ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝     
+```
 
 # DERP - A Modern College ERP System
 
 Welcome to DERP, a full-stack College Enterprise Resource Planning (ERP) system designed to streamline administrative and academic processes. This project provides a robust backend powered by Spring Boot and a sleek, responsive frontend built with Next.js.
-
-## Architecture Overview
-
-The application follows a classic client-server architecture. The Next.js frontend communicates with the Spring Boot backend via a RESTful API. The backend handles all business logic and interacts with a MongoDB database for data persistence.
-
-```mermaid
-graph TD;
-    subgraph Frontend
-        A[Next.js Client]
-    end
-    subgraph Backend
-        B[Spring Boot REST API]
-    end
-    subgraph Database
-        C[MongoDB]
-    end
-
-    A -- "HTTP Requests" --> B;
-    B -- "CRUD Operations" --> C;
-```
 
 ## Tech Stack
 
@@ -58,17 +39,6 @@ The system supports two main roles: **Admin** and **Student**.
 | **Course Management**  |   ✅   |    ✅    | Admins manage the course catalog; students can view available courses.       |
 | **Attendance Tracking**|   ✅   |    ❌    | Admins can record and manage student attendance.                            |
 | **Grade Management**   |   ✅   |    ✅    | Admins can assign grades; students can view their grades.                   |
-
-
-## Data Models
-
-The core of the application revolves around these data models:
-
-*   **User**: Represents a user account with credentials (`username`, `password`) and roles (`ADMIN`, `STUDENT`).
-*   **Student**: Stores personal information about a student (`firstName`, `lastName`, `email`, `studentIdNumber`).
-*   **Course**: Contains details about a course (`courseCode`, `courseName`, `description`, `credits`).
-*   **AttendanceRecord**: Tracks a student's attendance for a specific class on a given date.
-*   **Grade**: Links a student to a course with an assigned grade.
 
 
 ## Prerequisites
